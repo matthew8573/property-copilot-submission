@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <section className="mx-auto max-w-3xl space-y-5 px-6 py-16">
@@ -9,6 +11,12 @@ export default function HomePage() {
         (DynamoDB + Lambda), filterable by price, beds, baths, and property type, with
         the map and list always in sync.
       </p>
+        <Link
+        href="/browse"
+        className="inline-block rounded-lg bg-[#0077BE] px-6 py-3 font-semibold text-white hover:bg-[#005f96]"
+      >
+        Browse Properties
+      </Link>
     </section>
   );
 }
