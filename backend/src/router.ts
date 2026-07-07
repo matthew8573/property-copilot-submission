@@ -1,5 +1,8 @@
+import { ValidationError } from "./errors";
 import { filterProperties, parseFilter } from "./filter";
-import { getPropertyById, listAllProperties } from "./properties";
+import type { BoundingBox } from "./geo";
+import { getPropertyById, listAllProperties, queryByBoundingBox } from "./properties";
+import type { Property } from "./types";
 
 export type ApiRequest = {
   method: string;
@@ -11,6 +14,41 @@ export type ApiResponse = {
   statusCode: number;
   body: unknown;
 };
+
+/**
+ * Parse the `bbox` query parameter: `west,south,east,north` (GeoJSON order,
+ * i.e. minLng,minLat,maxLng,maxLat). Absent or empty means "no viewport
+ * constraint"; malformed throws a ValidationError (surfaced as a 400).
+ */
+export function parseBboxParam(raw: string | undefined): BoundingBox | undefined {
+  if (raw === undefined || raw === "") {
+    return undefined;
+  }
+
+  const parts = raw.split(",").map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) {
+    throw new ValidationError("bbox must be four numbers: west,south,east,north");
+  }
+
+  const [west, south, east, north] = parts;
+  if (west < -180 || east > 180 || south < -90 || north > 90) {
+    throw new ValidationError("bbox coordinates are out of range");
+  }
+  if (west >= east || south >= north) {
+    throw new ValidationError("bbox must have west < east and south < north");
+  }
+
+  return { minLat: south, minLng: west, maxLat: north, maxLng: east };
+}
+
+/**
+ * Stable presentation order: cheapest first, id as the tiebreak. Keeps the
+ * list from reshuffling between refetches (parallel partition queries return
+ * in nondeterministic order).
+ */
+function sortForResponse(properties: Property[]): Property[] {
+  return [...properties].sort((a, b) => a.rent - b.rent || a.id.localeCompare(b.id));
+}
 
 /**
  * Framework-agnostic request router shared by the Lambda handler (production)
@@ -38,14 +76,23 @@ export async function route(req: ApiRequest): Promise<ApiResponse> {
 
   // GET /properties
   //
-  // BASELINE: scans the whole table, applies attribute filters server-side, and
-  // returns the result. There is no viewport/bounding-box support yet — add it
-  // here (read `bbox` from the query, call your geospatial query) so the map
-  // does not request every listing on the planet.
+  // With `bbox` present this is the map's viewport query: it runs against the
+  // geo-index GSI (no table scan) and then applies the attribute filters.
+  // Without `bbox` it lists everything and filters. Both paths filter and
+  // sort server-side — the client never receives more than it asked for.
   if (req.path === "/properties") {
-    const all = await listAllProperties();
-    const properties = filterProperties(all, parseFilter(req.query));
-    return { statusCode: 200, body: { properties, count: properties.length } };
+    try {
+      const filter = parseFilter(req.query);
+      const box = parseBboxParam(req.query.bbox);
+      const candidates = box ? await queryByBoundingBox(box) : await listAllProperties();
+      const properties = sortForResponse(filterProperties(candidates, filter));
+      return { statusCode: 200, body: { properties, count: properties.length } };
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        return { statusCode: 400, body: { error: error.message } };
+      }
+      throw error;
+    }
   }
 
   return { statusCode: 404, body: { error: "Not found" } };

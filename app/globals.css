@@ -4,11 +4,24 @@
 
 body {
   background: #f8fafc;
-  color: #111827;
+  color: #0f172a;
 }
 
 input,
 textarea,
 select {
   background: white;
+}
+
+/*
+ * MapLibre popup: let the mini-card own its chrome. The .maplibregl-popup
+ * ancestor is required to win the specificity race against maplibre-gl.css
+ * regardless of stylesheet order — without it, MapLibre's default padding
+ * leaves a white frame around the image.
+ */
+.maplibregl-popup .maplibregl-popup-content {
+  padding: 0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.18);
 }

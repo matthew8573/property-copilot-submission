@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
 import {
   GEOHASH_PREFIX_LENGTH,
+  SERVICE_AREA,
   boundingBoxPrefixes,
   encodeGeohash,
   geohashPrefix,
+  intersectBoundingBoxes,
   isInBoundingBox,
   type BoundingBox
 } from "../backend/src/geo";
@@ -44,5 +46,30 @@ describe("geo", () => {
   test("isInBoundingBox respects edges", () => {
     expect(isInBoundingBox(49.28, -123.12, VANCOUVER_BOX)).toBe(true);
     expect(isInBoundingBox(49.19, -122.85, VANCOUVER_BOX)).toBe(false);
+  });
+
+  test("intersectBoundingBoxes returns the overlap, or null when disjoint", () => {
+    const other: BoundingBox = { minLat: 49.28, minLng: -123.2, maxLat: 49.4, maxLng: -123.12 };
+    expect(intersectBoundingBoxes(VANCOUVER_BOX, other)).toEqual({
+      minLat: 49.28,
+      minLng: -123.14,
+      maxLat: 49.3,
+      maxLng: -123.12
+    });
+
+    const toronto: BoundingBox = { minLat: 43.6, minLng: -79.5, maxLat: 43.7, maxLng: -79.3 };
+    expect(intersectBoundingBoxes(VANCOUVER_BOX, toronto)).toBeNull();
+  });
+
+  test("SERVICE_AREA covers all four seeded city centres", () => {
+    const centres: Array<[number, number]> = [
+      [49.2827, -123.1207], // Vancouver
+      [49.1666, -123.1336], // Richmond
+      [49.2488, -122.9805], // Burnaby
+      [49.1913, -122.849] // Surrey
+    ];
+    for (const [lat, lng] of centres) {
+      expect(isInBoundingBox(lat, lng, SERVICE_AREA)).toBe(true);
+    }
   });
 });

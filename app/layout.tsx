@@ -1,6 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { NavBar } from "@/components/NavBar";
+
+// Plus Jakarta Sans across the whole app; its heavy weights (up to 800) drive
+// the headings (font-black maps to the nearest loaded face).
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap"
+});
 
 export const metadata: Metadata = {
   title: "Property Copilot — Map Browser",
@@ -13,17 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={plusJakarta.className}>
       <body>
-        <header className="border-b bg-white">
-          <nav className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 text-sm">
-            <Link className="font-semibold" href="/">
-              Property Copilot
-            </Link>
-            <Link href="/browse">Browse</Link>
-          </nav>
-        </header>
-        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+        <NavBar />
+        {/* Pages own their width: browse goes full-bleed, home stays narrow. */}
+        <main>{children}</main>
       </body>
     </html>
   );

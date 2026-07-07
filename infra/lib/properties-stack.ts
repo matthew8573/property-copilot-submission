@@ -47,7 +47,8 @@ export class PropertiesStack extends cdk.Stack {
       projectRoot: repoRoot,
       depsLockFilePath: path.join(repoRoot, "package-lock.json"),
       runtime: lambda.Runtime.NODEJS_22_X,
-      memorySize: 256,
+      // CPU scales with memory; 1024MB keeps the geohash fan-out fast.
+      memorySize: 1024,
       timeout: cdk.Duration.seconds(10),
       environment: {
         PROPERTIES_TABLE: table.tableName
@@ -64,7 +65,9 @@ export class PropertiesStack extends cdk.Stack {
       corsPreflight: {
         allowOrigins: ["*"],
         allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.OPTIONS],
-        allowHeaders: ["Content-Type"]
+        allowHeaders: ["Content-Type"],
+        // Let browsers cache the preflight instead of paying it per request.
+        maxAge: cdk.Duration.days(1)
       }
     });
 

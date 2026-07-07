@@ -1,4 +1,6 @@
-export type PropertyType = "apartment" | "condo" | "house" | "townhouse";
+export const PROPERTY_TYPES = ["apartment", "condo", "house", "townhouse"] as const;
+
+export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 export type City = "Vancouver" | "Richmond" | "Burnaby" | "Surrey";
 
@@ -24,9 +26,23 @@ export type Property = {
   createdAt: string;
 };
 
+/**
+ * Filters a renter can apply. Mirrors the backend PropertyFilter: `bedrooms`
+ * and `bathrooms` are minimums; `propertyTypes` matches any of the listed
+ * types.
+ */
 export type PropertyFilter = {
   minRent?: number;
   maxRent?: number;
   bedrooms?: number;
-  propertyType?: PropertyType;
+  bathrooms?: number;
+  propertyTypes?: PropertyType[];
+};
+
+/** Map viewport bounds. Mirrors backend/src/geo.ts BoundingBox. */
+export type BoundingBox = {
+  minLat: number;
+  minLng: number;
+  maxLat: number;
+  maxLng: number;
 };

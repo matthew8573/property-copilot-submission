@@ -2,7 +2,9 @@
   "name": "property-copilot-infra",
   "version": "0.1.0",
   "private": true,
-  "bin": { "infra": "bin/app.ts" },
+  "bin": {
+    "infra": "bin/app.ts"
+  },
   "scripts": {
     "deploy": "cdk deploy",
     "destroy": "cdk destroy",
@@ -10,11 +12,11 @@
     "diff": "cdk diff"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
+    "@types/node": "^24.13.2",
     "aws-cdk": "^2.160.0",
     "esbuild": "^0.28.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.160.0",

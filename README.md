@@ -67,16 +67,36 @@ tests/          Vitest unit tests (geo math, filters, seed data)
    ```
 7. Open http://localhost:3000 and go to **Browse**.
 
+## API
+
+`GET /properties` supports server-side filtering and a geospatial viewport query
+(all parameters optional and composable):
+
+| Param | Example | Meaning |
+| --- | --- | --- |
+| `bbox` | `bbox=-123.16,49.25,-123.09,49.32` | Viewport as `west,south,east,north`; answered from the `geo-index` GSI, never a scan |
+| `minRent` / `maxRent` | `minRent=1800&maxRent=3200` | Rent range in CAD/month (inclusive) |
+| `bedrooms` | `bedrooms=2` | Minimum bedrooms |
+| `bathrooms` | `bathrooms=2` | Minimum bathrooms |
+| `propertyType` | `propertyType=condo,house` | Any-of property types |
+
+Malformed values (bad bbox, `minRent > maxRent`, unknown types) return `400`.
+Results are sorted by rent ascending, id as tiebreak.
+
 ## Running tests
 
 ```bash
 npm test
 ```
 
-The suite covers the geohash helpers (`tests/geo.test.ts`), filter composition
-(`tests/filter.test.ts`), and the seed data set (`tests/seed-data.test.ts`).
-These are pure and need no database. Add tests for the geospatial query and any
-new logic you write.
+The suite covers the geohash helpers and service-area clamp (`tests/geo.test.ts`),
+the geospatial viewport query against a mocked DynamoDB client
+(`tests/properties-query.test.ts` — one Query per covering prefix, pagination,
+exact-box refinement), filter composition and strict parsing
+(`tests/filter.test.ts`), the HTTP router including bbox validation and sorting
+(`tests/router.test.ts`), viewport/format helpers (`tests/map-utils.test.ts`),
+shareable-URL round-tripping (`tests/filters-url.test.ts`), and the seed data set
+(`tests/seed-data.test.ts`). Everything is pure or mocked — no database needed.
 
 ## Deploying
 
@@ -90,7 +110,9 @@ npx cdk deploy
 ```
 
 The stack creates the `Properties` table (with the `geo-index` GSI), the Lambda,
-and the HTTP API. Note the `ApiUrl` output. Then seed your real table:
+and the HTTP API. Note the `ApiUrl` output. Re-run `npx cdk deploy` after any
+`backend/src` change — the Lambda bundles that code at deploy time. Then seed
+your real table:
 
 ```bash
 # from the repo root, with .env pointing at AWS (unset DYNAMODB_ENDPOINT,

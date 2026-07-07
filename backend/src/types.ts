@@ -1,4 +1,6 @@
-export type PropertyType = "apartment" | "condo" | "house" | "townhouse";
+export const PROPERTY_TYPES = ["apartment", "condo", "house", "townhouse"] as const;
+
+export type PropertyType = (typeof PROPERTY_TYPES)[number];
 
 export type City = "Vancouver" | "Richmond" | "Burnaby" | "Surrey";
 
@@ -36,10 +38,15 @@ export type Property = {
   createdAt: string;
 };
 
-/** Filters a renter can apply. All optional; absent fields are not constrained. */
+/**
+ * Filters a renter can apply. All optional; absent fields are not constrained.
+ * `bedrooms` and `bathrooms` are minimums; `propertyTypes` matches a listing
+ * whose type is any of the listed values.
+ */
 export type PropertyFilter = {
   minRent?: number;
   maxRent?: number;
-  bedrooms?: number; // minimum number of bedrooms
-  propertyType?: PropertyType;
+  bedrooms?: number;
+  bathrooms?: number;
+  propertyTypes?: PropertyType[];
 };
