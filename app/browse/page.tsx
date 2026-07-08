@@ -2,20 +2,10 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchProperties } from "@/lib/api";
-import {
-  buildRentHistogram,
-  countActiveFilters,
-  parseBrowseParams,
-  serializeBrowseParams
-} from "@/lib/filters";
+import { fetchProperties, fetchStats, type CityStat } from "@/lib/api";
+import { countActiveFilters, parseBrowseParams, serializeBrowseParams } from "@/lib/filters";
 import type { PlaceSuggestion } from "@/lib/geocode";
-import {
-  boundingBoxOf,
-  METRO_VANCOUVER_BBOX,
-  movedSignificantly,
-  type FocusRequest
-} from "@/lib/map";
+import { METRO_VANCOUVER_BBOX, movedSignificantly, type FocusRequest } from "@/lib/map";
 import type { BoundingBox, Property, PropertyFilter } from "@/lib/types";
 import { BrowseSidebar } from "@/components/BrowseSidebar";
 import { FilterBar } from "@/components/FilterBar";
@@ -58,15 +48,17 @@ export default function BrowsePage() {
   const [slowRefresh, setSlowRefresh] = useState(false);
   const [filter, setFilter] = useState<PropertyFilter>({});
   const [bbox, setBbox] = useState<BoundingBox>(METRO_VANCOUVER_BBOX);
+  // Mobile only: which pane fills the screen (toggled by the floating button).
+  // Desktop (lg+) ignores this and always shows the map and list side by side.
   const [mobileView, setMobileView] = useState<"map" | "list">("map");
   // The whole market, fetched once (below). Powers the price histogram and the
   // search box's instant local fallback suggestions.
-  const [allProperties, setAllProperties] = useState<Property[]>([]);
   // A pending "fit the map to this box" request; id bumps to re-trigger a repeat.
   const [focusRequest, setFocusRequest] = useState<FocusRequest | null>(null);
-  // Whole-market rent distribution for the Price histogram (fetched once,
-  // unfiltered, so it never collapses as filters/viewport narrow the results).
+  // Whole-market rent histogram (server-computed, unfiltered so it never
+  // collapses) + each city's extent for the search box's local fallback.
   const [rentHistogram, setRentHistogram] = useState<number[]>([]);
+  const [cityStats, setCityStats] = useState<CityStat[]>([]);
   // URL params apply after hydration (window is client-only); fetching waits.
   const [hydrated, setHydrated] = useState(false);
 
@@ -87,18 +79,20 @@ export default function BrowsePage() {
     setHydrated(true);
   }, []);
 
-  // One-time whole-market fetch: powers the price histogram and search-to-locate.
+  // One-time whole-market stats fetch — a server-computed summary (histogram +
+  // city extents), NOT every row: powers the price histogram and the search
+  // box's local city fallback.
   useEffect(() => {
     let cancelled = false;
-    fetchProperties()
-      .then((all) => {
+    fetchStats()
+      .then((stats) => {
         if (!cancelled) {
-          setAllProperties(all);
-          setRentHistogram(buildRentHistogram(all.map((p) => p.rent)));
+          setRentHistogram(stats.histogram);
+          setCityStats(stats.cities);
         }
       })
       .catch(() => {
-        /* histogram is a non-critical enhancement; ignore failures */
+        /* stats are a non-critical enhancement; ignore failures */
       });
     return () => {
       cancelled = true;
@@ -240,30 +234,18 @@ export default function BrowsePage() {
       if (!q) {
         return [];
       }
-      const cities = [...new Set(allProperties.map((p) => p.city))];
-      return cities
-        .filter((city) => city.toLowerCase().includes(q))
-        .map((city): PlaceSuggestion | null => {
-          const box = boundingBoxOf(
-            allProperties
-              .filter((p) => p.city === city)
-              .map((p) => ({ lat: p.lat, lng: p.lng }))
-          );
-          if (!box) {
-            return null;
-          }
-          return {
-            id: `city-${city}`,
-            label: city,
-            detail: "British Columbia",
-            lat: (box.minLat + box.maxLat) / 2,
-            lng: (box.minLng + box.maxLng) / 2,
-            bbox: box
-          };
-        })
-        .filter((s): s is PlaceSuggestion => s !== null);
+      return cityStats
+        .filter((c) => c.city.toLowerCase().includes(q))
+        .map((c) => ({
+          id: `city-${c.city}`,
+          label: c.city,
+          detail: "British Columbia",
+          lat: (c.bbox.minLat + c.bbox.maxLat) / 2,
+          lng: (c.bbox.minLng + c.bbox.maxLng) / 2,
+          bbox: c.bbox
+        }));
     },
-    [allProperties]
+    [cityStats]
   );
 
   // Selecting a card selects the listing AND zooms the map to it (a zero-area
@@ -274,8 +256,7 @@ export default function BrowsePage() {
   const handleCardSelect = useCallback(
     (id: string) => {
       setActiveId(id);
-      // On mobile the map is hidden behind the list — surface it so the zoom is
-      // visible (harmless on desktop, where both panes always show).
+      // On mobile, jump to the map so the tapped listing is in view.
       setMobileView("map");
       const p = properties.find((property) => property.id === id);
       if (p) {
@@ -343,7 +324,8 @@ export default function BrowsePage() {
 
       {state === "ready" ? (
         <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-0 lg:grid-cols-[1.5fr_1fr]">
-          {/* Map pane (left on desktop) */}
+          {/* Map pane (left on desktop). On mobile it fills the screen or hides
+              behind the list, driven by the toggle button. */}
           <div className={mobileView === "map" ? "h-full min-h-0" : "hidden h-full min-h-0 lg:block"}>
             <MapPanel
               properties={properties}
@@ -422,7 +404,7 @@ export default function BrowsePage() {
 
       </div>
 
-      {/* Mobile-only list/map toggle; desktop shows both panes. */}
+      {/* Mobile-only list/map toggle; desktop shows both panes at once. */}
       {state === "ready" ? (
         <button
           type="button"

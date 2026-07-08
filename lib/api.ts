@@ -48,3 +48,24 @@ export async function fetchProperty(id: string): Promise<Property> {
   const data = await apiGet<{ property: Property }>(`/properties/${id}`);
   return data.property;
 }
+
+/** Bounds + count for one city, from the whole-market stats summary. */
+export type CityStat = { city: string; count: number; bbox: BoundingBox };
+
+/**
+ * Whole-market aggregates computed server-side: a rent histogram (aligned to
+ * the price slider's bounds) and each city's extent. The browse page fetches
+ * this small summary instead of downloading every row to shape the price
+ * control and the search box's local fallback.
+ */
+export type PropertyStats = {
+  histogram: number[];
+  bounds: { min: number; max: number };
+  buckets: number;
+  count: number;
+  cities: CityStat[];
+};
+
+export async function fetchStats(): Promise<PropertyStats> {
+  return apiGet<PropertyStats>("/properties/stats");
+}

@@ -49,7 +49,7 @@ export function PropertyCard({ property, active, onSelect, onHover }: PropertyCa
           </p>
           <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Available
+            Move-in by: *date*
           </span>
         </div>
         <p className="mt-1 text-xl font-bold text-slate-900">{formatRent(property.rent)}</p>

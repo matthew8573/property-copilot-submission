@@ -78,6 +78,13 @@ export class PropertiesStack extends cdk.Stack {
       methods: [apigwv2.HttpMethod.GET],
       integration
     });
+    // Static /properties/stats before the {id} route (HTTP API prefers the more
+    // specific static segment, so it never collides with a listing id).
+    httpApi.addRoutes({
+      path: "/properties/stats",
+      methods: [apigwv2.HttpMethod.GET],
+      integration
+    });
     httpApi.addRoutes({
       path: "/properties/{id}",
       methods: [apigwv2.HttpMethod.GET],

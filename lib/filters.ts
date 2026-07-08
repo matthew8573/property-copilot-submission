@@ -6,37 +6,6 @@ export const RENT_BOUNDS = { min: 1400, max: 5200, step: 50 } as const;
 export const BEDROOM_OPTIONS = [1, 2, 3, 4] as const;
 export const BATHROOM_OPTIONS = [1, 2, 3] as const;
 
-/** Number of bars in the price-distribution histogram. */
-export const RENT_HISTOGRAM_BUCKETS = 24;
-
-/**
- * Bin a list of rents into a fixed-width histogram over [bounds.min,
- * bounds.max]. Returns a plain count-per-bucket array — the right structure
- * here: O(n) to build, O(1) to index while rendering, and already ordered by
- * price (a hashmap would add hashing overhead and lose that order). Rents
- * outside the bounds clamp into the edge buckets so nothing is dropped.
- */
-export function buildRentHistogram(
-  rents: number[],
-  bounds: { min: number; max: number } = RENT_BOUNDS,
-  buckets: number = RENT_HISTOGRAM_BUCKETS
-): number[] {
-  const counts = new Array<number>(buckets).fill(0);
-  const span = bounds.max - bounds.min;
-  if (span <= 0 || buckets <= 0) {
-    return counts;
-  }
-  for (const rent of rents) {
-    if (!Number.isFinite(rent)) {
-      continue;
-    }
-    const clamped = Math.min(Math.max(rent, bounds.min), bounds.max);
-    const idx = Math.min(buckets - 1, Math.floor(((clamped - bounds.min) / span) * buckets));
-    counts[idx] += 1;
-  }
-  return counts;
-}
-
 /**
  * Client-side free-text search over the already-loaded listings. The viewport
  * query does the heavy geospatial work; this just narrows what's on screen by

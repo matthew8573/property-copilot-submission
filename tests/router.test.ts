@@ -70,6 +70,23 @@ describe("route", () => {
     expect(missing.statusCode).toBe(404);
   });
 
+  test("GET /properties/stats returns aggregates, not a listing lookup", async () => {
+    listAllPropertiesMock.mockResolvedValueOnce([
+      stub("prop-a", { rent: 1500, city: "Vancouver" }),
+      stub("prop-b", { rent: 4000, city: "Burnaby" })
+    ]);
+
+    const res = await route({ method: "GET", path: "/properties/stats", query: {} });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.body as { histogram: number[]; cities: unknown[]; count: number };
+    expect(body.count).toBe(2);
+    expect(body.histogram.reduce((a, b) => a + b, 0)).toBe(2);
+    expect(body.cities).toHaveLength(2);
+    // "stats" must not fall through to the /properties/:id lookup.
+    expect(getPropertyByIdMock).not.toHaveBeenCalled();
+  });
+
   test("GET /properties without bbox lists everything, sorted by rent then id", async () => {
     listAllPropertiesMock.mockResolvedValueOnce([
       stub("prop-b", { rent: 3000 }),

@@ -2,6 +2,7 @@ import { ValidationError } from "./errors";
 import { filterProperties, parseFilter } from "./filter";
 import type { BoundingBox } from "./geo";
 import { getPropertyById, listAllProperties, queryByBoundingBox } from "./properties";
+import { computeStats } from "./stats";
 import type { Property } from "./types";
 
 export type ApiRequest = {
@@ -62,6 +63,15 @@ export async function route(req: ApiRequest): Promise<ApiResponse> {
 
   if (req.path === "/health") {
     return { statusCode: 200, body: { ok: true } };
+  }
+
+  // GET /properties/stats — whole-market aggregates (rent histogram + per-city
+  // extents) computed server-side, so the client fetches a small summary
+  // instead of every row. Must precede the /properties/:id match below, which
+  // would otherwise treat "stats" as a listing id.
+  if (req.path === "/properties/stats") {
+    const properties = await listAllProperties();
+    return { statusCode: 200, body: computeStats(properties) };
   }
 
   // GET /properties/:id
