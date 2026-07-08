@@ -44,9 +44,12 @@
    `filterProperties`, so a single tested implementation defines composition. The server
    validates strictly (contradictory rent ranges, unknown types, non-integer counts →
    400) while URL-state parsing is deliberately lenient (a mangled link degrades to
-   defaults instead of crashing). Search is a *navigation*, not a filter: a keyless
-   geocoder (Photon, biased and clamped to Metro Vancouver) offers type-ahead place
-   suggestions; picking one re-frames the map to that place and the viewport refetch
+   defaults instead of crashing). The price control is anchored by a whole-market rent
+   histogram — a small aggregate computed server-side by `/properties/stats` and
+   deliberately unfiltered, so it never collapses as filters narrow the results (and the
+   client never downloads the full row set to draw it). Search is a *navigation*, not a
+   filter: a keyless geocoder (Photon, biased and clamped to Metro Vancouver) offers
+   type-ahead place suggestions; picking one re-frames the map to that place and the viewport refetch
    repopulates the list — so "Kitsilano" flies the map there and the list follows,
    keeping the map the single source of truth. The geocoder is the one external runtime
    dependency, chosen keyless to preserve decision 1's no-secret deploy; it is debounced,
@@ -58,8 +61,21 @@
 
 ## What I'd add with more time
 
-- **Square-footage filter** — the filter model and bar accommodate it; cut to keep the
-  bar scannable within the time budget.
+- **More filter dimensions — square footage, pet-friendly, in-unit laundry, parking** —
+  the filter model and bar accommodate new dimensions cheaply (square footage needs no
+  schema change; the others add fields to the data model and seed). Cut to keep the bar
+  scannable within the time budget.
+- **Move-in / availability date** — an `availableFrom` field on each listing, surfaced on
+  the card (the card's move-in badge anticipates this) and filterable by a renter's
+  desired move-in date.
+- **Favourites** — a heart on each card and a saved-listings tab; localStorage first,
+  moving to a per-user table once accounts exist.
+- **Accounts** — the app shell already sketches the destination (Dashboard, Profile, and
+  sign-out are present but inert); real authentication (e.g. Cognito) would activate
+  them and let favourites and saved searches follow a renter across devices.
+- **Richer mobile UI** — the map⇄list toggle works, but a draggable bottom-sheet list
+  over the map (the pattern Zillow and Airbnb use) would let renters see both at once
+  on a phone.
 - **Listing detail view** — modal or page with the five-image gallery, reusing the card's
   building blocks (`GET /properties/:id` already exists).
 - **Zoom-adaptive geohash precision** — a second, coarser GSI partition key
@@ -67,8 +83,13 @@
   instead of ~40.
 - **Client-side response caching (SWR)** — panning A→B→A refetches A today; keyed
   caching would make back-pans instant.
-- **Pagination** — `limit`/`cursor` on `/properties` before the dataset outgrows
-  single-response payloads.
+- **Pagination** — `limit`/`cursor` on `/properties`; fine at 50 listings, needed
+  before the dataset outgrows single-response payloads.
+- **Accessibility — the list is solid; the map is the gap.** Markers and cards are
+  keyboard-operable buttons with labels, but the map has no designed keyboard
+  experience for panning and zooming, popovers don't trap focus, and the popup lacks
+  Escape-to-dismiss; a fuller pass adds those plus a screen-reader summary of visible
+  results.
 - **Tighter CORS + rate limiting** — lock `Access-Control-Allow-Origin` to the deployed
   frontend origin instead of `*`.
 - **DynamoDB Local integration tests in CI** — the geospatial query is tested against a
