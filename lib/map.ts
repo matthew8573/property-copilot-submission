@@ -24,30 +24,6 @@ export const METRO_VANCOUVER_BBOX: BoundingBox = {
 };
 
 /**
- * The tightest bounding box containing every given point, or null when the list
- * is empty. Used to re-frame the map on a search: we match listings across the
- * whole market, then fit the map to where they actually are. A single match
- * yields a zero-area box (min === max); the caller's fitBounds maxZoom keeps
- * that from zooming in absurdly.
- */
-export function boundingBoxOf(points: { lat: number; lng: number }[]): BoundingBox | null {
-  if (points.length === 0) {
-    return null;
-  }
-  let minLat = Infinity;
-  let minLng = Infinity;
-  let maxLat = -Infinity;
-  let maxLng = -Infinity;
-  for (const { lat, lng } of points) {
-    if (lat < minLat) minLat = lat;
-    if (lat > maxLat) maxLat = lat;
-    if (lng < minLng) minLng = lng;
-    if (lng > maxLng) maxLng = lng;
-  }
-  return { minLat, minLng, maxLat, maxLng };
-}
-
-/**
  * Whether the viewport moved enough to justify a refetch. Filters out
  * accidental nudges: unless some edge shifted by more than `fraction` of the
  * previous viewport's span, the move is not worth a round-trip (and, more

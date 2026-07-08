@@ -6,28 +6,6 @@ export const RENT_BOUNDS = { min: 1400, max: 5200, step: 50 } as const;
 export const BEDROOM_OPTIONS = [1, 2, 3, 4] as const;
 export const BATHROOM_OPTIONS = [1, 2, 3] as const;
 
-/**
- * Client-side free-text search over the already-loaded listings. The viewport
- * query does the heavy geospatial work; this just narrows what's on screen by
- * name/place, instantly and with no backend round-trip. Case-insensitive; every
- * whitespace-separated token must appear somewhere in the listing's title,
- * street, city, or type (AND), so "burnaby condo" matches a Burnaby condo. An
- * empty query returns the list unchanged.
- */
-export function searchProperties<
-  T extends { title: string; street: string; city: string; propertyType: string }
->(properties: T[], query: string): T[] {
-  const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) {
-    return properties;
-  }
-  return properties.filter((property) => {
-    const haystack =
-      `${property.title} ${property.street} ${property.city} ${property.propertyType}`.toLowerCase();
-    return tokens.every((token) => haystack.includes(token));
-  });
-}
-
 /** Number of filter dimensions currently constraining results. */
 export function countActiveFilters(filter: PropertyFilter): number {
   let count = 0;

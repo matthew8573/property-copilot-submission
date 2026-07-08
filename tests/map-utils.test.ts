@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { boundingBoxOf, METRO_VANCOUVER_BBOX, movedSignificantly } from "../lib/map";
+import { METRO_VANCOUVER_BBOX, movedSignificantly } from "../lib/map";
 import { bathroomLabel, bedroomLabel, formatPriceShort } from "../lib/format";
 import type { BoundingBox } from "../lib/types";
 
@@ -42,31 +42,6 @@ describe("movedSignificantly", () => {
   test("the metro fallback viewport is well-formed", () => {
     expect(METRO_VANCOUVER_BBOX.minLat).toBeLessThan(METRO_VANCOUVER_BBOX.maxLat);
     expect(METRO_VANCOUVER_BBOX.minLng).toBeLessThan(METRO_VANCOUVER_BBOX.maxLng);
-  });
-});
-
-describe("boundingBoxOf", () => {
-  test("returns null for no points", () => {
-    expect(boundingBoxOf([])).toBeNull();
-  });
-
-  test("wraps a single point in a zero-area box", () => {
-    expect(boundingBoxOf([{ lat: 49.2, lng: -123.1 }])).toEqual({
-      minLat: 49.2,
-      minLng: -123.1,
-      maxLat: 49.2,
-      maxLng: -123.1
-    });
-  });
-
-  test("spans the extremes of several points", () => {
-    expect(
-      boundingBoxOf([
-        { lat: 49.2, lng: -123.1 },
-        { lat: 49.28, lng: -123.0 },
-        { lat: 49.1, lng: -123.2 }
-      ])
-    ).toEqual({ minLat: 49.1, minLng: -123.2, maxLat: 49.28, maxLng: -123.0 });
   });
 });
 
