@@ -35,6 +35,8 @@ export type Property = {
   geohashPrefix: string;
   // Exactly five image URLs per listing.
   images: string[];
+  // Earliest move-in date, as an ISO calendar date (YYYY-MM-DD).
+  availableFrom: string;
   createdAt: string;
 };
 

@@ -21,6 +21,17 @@ export function bathroomLabel(bathrooms: number): string {
   return `${bathrooms} bath${bathrooms === 1 ? "" : "s"}`;
 }
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * Format an ISO calendar date (YYYY-MM-DD) as "Aug 3". Parsed by string split,
+ * not Date, so the day never shifts across timezones.
+ */
+export function formatMoveInDate(isoDate: string): string {
+  const [, month, day] = isoDate.split("-").map(Number);
+  return `${MONTHS[month - 1]} ${day}`;
+}
+
 /** Compact price for map markers: $980, $2.4k, $3k. */
 export function formatPriceShort(rent: number): string {
   if (rent < 1000) {

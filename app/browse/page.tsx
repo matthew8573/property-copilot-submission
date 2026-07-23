@@ -5,7 +5,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchProperties, fetchStats, type CityStat } from "@/lib/api";
 import { countActiveFilters, parseBrowseParams, serializeBrowseParams } from "@/lib/filters";
 import type { PlaceSuggestion } from "@/lib/geocode";
-import { METRO_VANCOUVER_BBOX, movedSignificantly, type FocusRequest } from "@/lib/map";
+import {
+  METRO_VANCOUVER_BBOX,
+  expandBoundingBox,
+  movedSignificantly,
+  type FocusRequest
+} from "@/lib/map";
 import type { BoundingBox, Property, PropertyFilter } from "@/lib/types";
 import { BrowseSidebar } from "@/components/BrowseSidebar";
 import { FilterBar } from "@/components/FilterBar";
@@ -116,7 +121,9 @@ export default function BrowsePage() {
         setState("loading");
       }
       try {
-        const data = await fetchProperties(filter, bbox);
+        // Over-fetch ~15% beyond the viewport so markers don't pop into
+        // existence at the screen edge mid-pan.
+        const data = await fetchProperties(filter, expandBoundingBox(bbox, 0.15));
         if (requestId.current !== id) {
           return; // superseded by a newer request
         }

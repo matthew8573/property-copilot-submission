@@ -30,6 +30,16 @@ describe("seed data", () => {
       expect(p.bathrooms).toBeGreaterThanOrEqual(1);
       expect(Math.abs(p.lat)).toBeLessThanOrEqual(90);
       expect(Math.abs(p.lng)).toBeLessThanOrEqual(180);
+      expect(p.availableFrom).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number.isNaN(Date.parse(p.availableFrom))).toBe(false);
+    }
+  });
+
+  test("no two listings share a cover image, and each gallery has no repeats", () => {
+    const covers = properties.map((p) => p.images[0]);
+    expect(new Set(covers).size).toBe(covers.length);
+    for (const p of properties) {
+      expect(new Set(p.images).size).toBe(p.images.length);
     }
   });
 

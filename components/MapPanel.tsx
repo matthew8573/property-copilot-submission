@@ -10,7 +10,13 @@ import {
   type ViewStateChangeEvent
 } from "react-map-gl/maplibre";
 import Supercluster from "supercluster";
-import { bathroomLabel, bedroomLabel, formatPriceShort, formatRent } from "@/lib/format";
+import {
+  bathroomLabel,
+  bedroomLabel,
+  formatMoveInDate,
+  formatPriceShort,
+  formatRent
+} from "@/lib/format";
 import { METRO_VANCOUVER_BBOX, type FocusRequest } from "@/lib/map";
 import type { BoundingBox, Property } from "@/lib/types";
 
@@ -377,9 +383,9 @@ export function MapPanel({
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                     {selected.propertyType}
                   </p>
-                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium text-emerald-600">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                    Move-in by: *date*
+                    Move-in: {formatMoveInDate(selected.availableFrom)}
                   </span>
                 </div>
                 <p className="mt-1 text-lg font-bold text-slate-900">

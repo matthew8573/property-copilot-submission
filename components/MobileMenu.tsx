@@ -134,8 +134,10 @@ export function MobileMenu() {
               <Link
                 href="/"
                 onClick={close}
-                className="text-lg font-black tracking-tight text-[#0077BE]"
+                className="flex items-center gap-2 text-lg font-black tracking-tight text-[#0077BE]"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/PropertyCopilotLogo.png" alt="" aria-hidden="true" className="h-8 w-8 object-contain" />
                 Property Copilot
               </Link>
               <button

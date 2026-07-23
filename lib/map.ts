@@ -24,6 +24,22 @@ export const METRO_VANCOUVER_BBOX: BoundingBox = {
 };
 
 /**
+ * Grow a box by `fraction` of its span on every side. Fetching slightly beyond
+ * the visible viewport hides marker pop-in at the edges while panning; the
+ * server clamps to its service area, so over-asking near the fence is free.
+ */
+export function expandBoundingBox(box: BoundingBox, fraction: number): BoundingBox {
+  const latPad = (box.maxLat - box.minLat) * fraction;
+  const lngPad = (box.maxLng - box.minLng) * fraction;
+  return {
+    minLat: Math.max(-90, box.minLat - latPad),
+    maxLat: Math.min(90, box.maxLat + latPad),
+    minLng: Math.max(-180, box.minLng - lngPad),
+    maxLng: Math.min(180, box.maxLng + lngPad)
+  };
+}
+
+/**
  * Whether the viewport moved enough to justify a refetch. Filters out
  * accidental nudges: unless some edge shifted by more than `fraction` of the
  * previous viewport's span, the move is not worth a round-trip (and, more

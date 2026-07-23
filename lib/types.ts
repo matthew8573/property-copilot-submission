@@ -23,6 +23,7 @@ export type Property = {
   geohash: string;
   geohashPrefix: string;
   images: string[];
+  availableFrom: string;
   createdAt: string;
 };
 

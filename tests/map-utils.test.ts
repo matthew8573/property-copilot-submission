@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { METRO_VANCOUVER_BBOX, movedSignificantly } from "../lib/map";
-import { bathroomLabel, bedroomLabel, formatPriceShort } from "../lib/format";
+import { METRO_VANCOUVER_BBOX, expandBoundingBox, movedSignificantly } from "../lib/map";
+import { bathroomLabel, bedroomLabel, formatMoveInDate, formatPriceShort } from "../lib/format";
 import type { BoundingBox } from "../lib/types";
 
 // Spans: 0.1 lat, 0.2 lng → 1% thresholds are 0.001 / 0.002.
@@ -42,6 +42,33 @@ describe("movedSignificantly", () => {
   test("the metro fallback viewport is well-formed", () => {
     expect(METRO_VANCOUVER_BBOX.minLat).toBeLessThan(METRO_VANCOUVER_BBOX.maxLat);
     expect(METRO_VANCOUVER_BBOX.minLng).toBeLessThan(METRO_VANCOUVER_BBOX.maxLng);
+  });
+});
+
+describe("expandBoundingBox", () => {
+  test("pads every side by the fraction of its span", () => {
+    // Spans: 0.1 lat, 0.2 lng → 15% pads are 0.015 / 0.03.
+    const grown = expandBoundingBox(BASE, 0.15);
+    expect(grown.minLat).toBeCloseTo(49.185, 10);
+    expect(grown.maxLat).toBeCloseTo(49.315, 10);
+    expect(grown.minLng).toBeCloseTo(-123.23, 10);
+    expect(grown.maxLng).toBeCloseTo(-122.97, 10);
+  });
+
+  test("clamps to valid coordinates at the poles and antimeridian", () => {
+    const extreme: BoundingBox = { minLat: -89, minLng: -179, maxLat: 89, maxLng: 179 };
+    const grown = expandBoundingBox(extreme, 0.5);
+    expect(grown.minLat).toBe(-90);
+    expect(grown.maxLat).toBe(90);
+    expect(grown.minLng).toBe(-180);
+    expect(grown.maxLng).toBe(180);
+  });
+});
+
+describe("formatMoveInDate", () => {
+  test("formats an ISO date as a short month + day, timezone-proof", () => {
+    expect(formatMoveInDate("2026-08-03")).toBe("Aug 3");
+    expect(formatMoveInDate("2026-12-25")).toBe("Dec 25");
   });
 });
 

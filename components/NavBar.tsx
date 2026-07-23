@@ -14,9 +14,11 @@ export function NavBar() {
       <nav className="flex h-14 items-center gap-3 px-4 text-base sm:px-6">
         <MobileMenu />
         <Link
-          className="text-lg font-black tracking-tight text-[#0077BE] transition hover:opacity-80"
+          className="flex items-center gap-2 text-lg font-black tracking-tight text-[#0077BE] transition hover:opacity-80"
           href="/"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/PropertyCopilotLogo.png" alt="" aria-hidden="true" className="h-8 w-8 object-contain" />
           Property Copilot
         </Link>
       </nav>
